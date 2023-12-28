@@ -300,9 +300,7 @@ void PatternInterpreter(PT3_Channel_Parameters *Chan, int ch) {
 	while (!quit) {
 		uint8_t op = idx[Chan->Address_In_Pattern];
 //		printf("%02X ",op);
-		switch (op)
-		{
-		case 0xf0 ... 0xff: //set ornament + samp: smp*2
+		if (op >= 0xf0) {  //set ornament + samp: smp*2
 			Chan->OrnamentPointer = ram->PT3_OrnamentsPointers[op - 0xf0];
 			Chan->Loop_Ornament_Position = idx[Chan->OrnamentPointer++];
 			Chan->Ornament_Length = idx[Chan->OrnamentPointer++];
@@ -313,20 +311,20 @@ void PatternInterpreter(PT3_Channel_Parameters *Chan, int ch) {
 			Chan->Loop_Sample_Position = idx[Chan->SamplePointer++];
 			Chan->Sample_Length = idx[Chan->SamplePointer++];
 			Chan->Envelope_Enabled = false;
-			break;
-		case 0xd1 ... 0xef: //set sample
+		}
+		else if (op >= 0xd1) {  //set sample
 			Chan->SamplePointer = ram->PT3_SamplesPointers[op - 0xd0];
 //			printf("s%i ",op-0xd0);
 			Chan->Loop_Sample_Position = idx[Chan->SamplePointer++];
 			Chan->Sample_Length = idx[Chan->SamplePointer++];
-			break;
-		case 0xd0: // quit
+		}
+		else if (op == 0xd0) {  //quit
 			quit = true;
-			break;
-		case 0xc1 ... 0xcf: //set volume: vol
+		}
+		else if (op >= 0xc1) {  //set volume: vol
 			Chan->Volume = op - 0xc0;
-			break;
-		case 0xc0:  //no note and quit (aka volume=0)
+		}
+		else if (op == 0xc0) {  //no note and quit (aka volume=0)
 			Chan->Position_In_Sample = 0;
 			Chan->Current_Amplitude_Sliding = 0;
 			Chan->Current_Noise_Sliding = 0;
@@ -338,8 +336,8 @@ void PatternInterpreter(PT3_Channel_Parameters *Chan, int ch) {
 			Chan->Current_OnOff = 0;
 			Chan->Enabled = false;
 			quit = true;
-			break;
-		case 0xb2 ... 0xbf: //set envelope: hsl, lsl
+		}
+		else if (op >= 0xb2) {  //set envelope: hsl, lsl
 			Chan->Envelope_Enabled = true;
 			pl->AY[13] = op - 0xb1;
 			pl->PT3.Env_Base.hi = idx[++Chan->Address_In_Pattern];
@@ -348,15 +346,15 @@ void PatternInterpreter(PT3_Channel_Parameters *Chan, int ch) {
 			Chan->Position_In_Ornament = 0;
 			pl->PT3.Cur_Env_Slide = 0;
 			pl->PT3.Cur_Env_Delay = 0;
-			break;
-		case 0xb1: //set skip lines: lines
+		}
+		else if (op == 0xb1) {  //set skip lines: lines
 			Chan->Number_Of_Notes_To_Skip = idx[++Chan->Address_In_Pattern];
-			break;
-		case 0xb0: //disable envelope
+		}
+		else if (op == 0xb0) {  //disable envelope
 			Chan->Envelope_Enabled = false;
 			Chan->Position_In_Ornament = 0;
-			break;
-		case 0x50 ... 0xaf: //set note and quit
+		}
+		else if (op >= 0x50) {  //set note and quit
 			Chan->Note = op - 0x50;
 			Chan->Position_In_Sample = 0;
 			Chan->Current_Amplitude_Sliding = 0;
@@ -369,63 +367,46 @@ void PatternInterpreter(PT3_Channel_Parameters *Chan, int ch) {
 			Chan->Current_OnOff = 0;
 			Chan->Enabled = true;
 			quit = true;
-			break;
-		case 0x40 ... 0x4f: //set ornament (env not disabled): orn
+		}	
+		else if (op >= 0x40) {  //set ornament (env not disabled): orn
 			Chan->OrnamentPointer = ram->PT3_OrnamentsPointers[op - 0x40];
 			Chan->Loop_Ornament_Position = idx[Chan->OrnamentPointer++];
 			Chan->Ornament_Length = idx[Chan->OrnamentPointer++];
 			Chan->Position_In_Ornament = 0;
-			break;
-		case 0x20 ... 0x3f: // set noise offset: offset
+		}
+		else if (op >= 0x20) {  // set noise offset: offset
 			pl->PT3.Noise_Base = op - 0x20;
-			break;
-		case 0x11 ... 0x1f: // set env+samp: henv, lenv, smp*2 
+		}
+		else if (op >= 0x11) {  // set env+samp: henv, lenv, smp*2 
 			pl->AY[13] = op - 0x10;
 			pl->PT3.Env_Base.hi = idx[++Chan->Address_In_Pattern];
 			pl->PT3.Env_Base.lo = idx[++Chan->Address_In_Pattern];
 			pl->PT3.Cur_Env_Slide = 0;
 			pl->PT3.Cur_Env_Delay = 0;
 //			printf("{%2x} ",pl->PT3.Env_Base.wrd);
-
 			Chan->Envelope_Enabled = true;
 			Chan->SamplePointer = ram->PT3_SamplesPointers[idx[++Chan->Address_In_Pattern]/2];
 //			printf("s%i ",idx[Chan->Address_In_Pattern]/2);
 			Chan->Loop_Sample_Position = idx[Chan->SamplePointer++];
 			Chan->Sample_Length = idx[Chan->SamplePointer++];
 			Chan->Position_In_Ornament = 0;
-			break;
-		case 0x10: //disable env, set orn=0, set sample: smp*2
+		}
+		else if (op == 0x10) {  //disable env, set orn=0, set sample: smp*2
 			Chan->Envelope_Enabled = false;
 			Chan->SamplePointer = ram->PT3_SamplesPointers[idx[++Chan->Address_In_Pattern]/2];
 			Chan->Loop_Sample_Position = idx[Chan->SamplePointer++];
 			Chan->Sample_Length = idx[Chan->SamplePointer++];
 			Chan->Position_In_Ornament = 0;
-			break;
-		case 9:
-			Flag9 = ++counter;
-			break;
-		case 8:
-			Flag8 = ++counter;
-			break;
-		case 5:
-			Flag5 = ++counter;
-			break;
-		case 4:
-			Flag4 = ++counter;
-			break;
-		case 3:
-			Flag3 = ++counter;
-			break;
-		case 2:
-			Flag2 = ++counter;
-			break;
-		case 1:
-			Flag1 = ++counter;
-			break;
 		}
+		else if (op == 9) Flag9 = ++counter;
+		else if (op == 8) Flag8 = ++counter;
+		else if (op == 5) Flag5 = ++counter;
+		else if (op == 4) Flag4 = ++counter;
+		else if (op == 3) Flag3 = ++counter;
+		else if (op == 2) Flag2 = ++counter;
+		else if (op == 1) Flag1 = ++counter;
 		Chan->Address_In_Pattern++;
 	}
-
     while (counter > 0){
 		if (counter == Flag1) { //gliss: delay,lsl,hsl
 			Chan->Ton_Slide_Delay = idx[Chan->Address_In_Pattern++];
