@@ -124,6 +124,7 @@ const uint16_t PT3NoteTable_REAL_34_35[96] = {
 
 
 typedef struct TSData {
+#pragma pack(push,1)
 	char     type0[4];
 	uint16_t size0;
 	char     type1[4];
@@ -131,11 +132,13 @@ typedef struct TSData {
 	char     type2[4];
 	uint16_t size2;
 	char     TSID[4];
-} __attribute__((packed)) TSData;
+#pragma pack(pop)
+} TSData;
 
 typedef struct Module {
     union {
 		uint8_t  Index[65536];
+#pragma pack(push,1)
 		struct {
 			uint8_t  PT3_MusicName[99];
 			uint8_t  PT3_TonTableId;
@@ -146,7 +149,8 @@ typedef struct Module {
 			uint16_t PT3_SamplesPointers[32];
 			uint16_t PT3_OrnamentsPointers[16];
 			uint8_t  PT3_PositionList[65535-200];
-			}__attribute__((packed));
+			};
+#pragma pack(pop)
 	};
 } Module;
 
@@ -196,11 +200,12 @@ typedef struct PT3_Channel_Parameters {
 } PT3_Channel_Parameters;
 
 
+#pragma pack(push,1)
 typedef struct PT3_Parameters {
 	union {
 		uint16_t wrd;
 		struct { uint8_t lo,hi; };
-		} __attribute__((packed)) Env_Base;
+		} Env_Base;
 	int16_t  Cur_Env_Slide;
 	int16_t  Env_Slide_Add;
 	int8_t   Cur_Env_Delay;
@@ -210,13 +215,14 @@ typedef struct PT3_Parameters {
 	uint8_t  AddToNoise;
 	uint8_t  DelayCounter;
 	uint8_t  CurrentPosition;
-} __attribute__((packed)) PT3_Parameters;
+} PT3_Parameters;
 
 typedef struct TPlParams {
 	PT3_Parameters PT3;
 	PT3_Channel_Parameters PT3_[3]; //a+b+c
 	uint8_t AY[14];
-} __attribute__((packed)) TPlParams;
+} TPlParams;
+#pragma pack(pop)
 
 TPlParams PlParams[10];
 TPlConsts PlConsts[10];
